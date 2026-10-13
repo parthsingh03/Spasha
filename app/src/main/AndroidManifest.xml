@@ -4,9 +4,6 @@
     <!-- Camera: the live detection view. Frames are processed on-device only. -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Internet: used ONLY by the Dossiers tab to fetch the public FBI Wanted list. -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
     <!-- Vibrate on Person-of-Interest zone entry. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
