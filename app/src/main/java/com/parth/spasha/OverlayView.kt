@@ -54,21 +54,35 @@ class OverlayView @JvmOverloads constructor(
     }
     private val trailPaint = Paint().apply {
         color = Color.WHITE
-        alpha = 80
+        alpha = 55
         style = Paint.Style.STROKE
-        strokeWidth = 3f
+        strokeWidth = 2.5f
         isAntiAlias = true
     }
     private val labelPaint = Paint().apply {
         color = Color.WHITE
-        textSize = 34f
+        textSize = 30f
         typeface = Typeface.MONOSPACE
         isAntiAlias = true
     }
     private val labelBgPaint = Paint().apply {
         color = Color.BLACK
-        alpha = 170
+        alpha = 155
         style = Paint.Style.FILL
+    }
+    private val reticlePaint = Paint().apply {
+        color = Color.WHITE
+        alpha = 95
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+        isAntiAlias = true
+    }
+    private val reticleRedPaint = Paint().apply {
+        color = Color.rgb(255, 46, 46)
+        alpha = 85
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+        isAntiAlias = true
     }
     private val poiLabelBgPaint = Paint().apply {
         color = Color.rgb(183, 28, 28)
@@ -178,6 +192,30 @@ class OverlayView @JvmOverloads constructor(
         }
     }
 
+    /** Ghost Glass target frame: corner brackets only, never a heavy full box. */
+    private fun drawCornerFrame(
+        canvas: Canvas,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        paint: Paint
+    ) {
+        val arm = (minOf(right - left, bottom - top) * 0.28f).coerceIn(18f, 54f)
+        // Top-left
+        canvas.drawLine(left, top, left + arm, top, paint)
+        canvas.drawLine(left, top, left, top + arm, paint)
+        // Top-right
+        canvas.drawLine(right - arm, top, right, top, paint)
+        canvas.drawLine(right, top, right, top + arm, paint)
+        // Bottom-left
+        canvas.drawLine(left, bottom, left + arm, bottom, paint)
+        canvas.drawLine(left, bottom - arm, left, bottom, paint)
+        // Bottom-right
+        canvas.drawLine(right - arm, bottom, right, bottom, paint)
+        canvas.drawLine(right, bottom - arm, right, bottom, paint)
+    }
+
     private fun drawBoxes(canvas: Canvas) {
         for (track in tracksSnapshot) {
             val isPoi = track.key == poiKey
@@ -185,7 +223,25 @@ class OverlayView @JvmOverloads constructor(
             val top = mapY(track.box.top)
             val right = mapX(track.box.right)
             val bottom = mapY(track.box.bottom)
-            canvas.drawRect(left, top, right, bottom, if (isPoi) poiPaint else boxPaint)
+
+            if (isPoi) {
+                // Soft double reticle around the pinned target, as in the
+                // Ghost Glass concept. It stays behind the corner frame.
+                val cx = (left + right) / 2f
+                val cy = (top + bottom) / 2f
+                val rx = (right - left) / 2f
+                val ry = (bottom - top) / 2f
+                canvas.drawOval(
+                    cx - rx - 24f, cy - ry - 24f, cx + rx + 24f, cy + ry + 24f,
+                    reticlePaint
+                )
+                canvas.drawOval(
+                    cx - rx - 46f, cy - ry - 46f, cx + rx + 46f, cy + ry + 46f,
+                    reticleRedPaint
+                )
+            }
+
+            drawCornerFrame(canvas, left, top, right, bottom, if (isPoi) poiPaint else boxPaint)
 
             val confidencePct = (track.confidence * 100).toInt()
             val label = if (isPoi) {
@@ -195,12 +251,12 @@ class OverlayView @JvmOverloads constructor(
                 String.format(Locale.US, "%s · %d%%", track.displayName(), confidencePct)
             }
             val textWidth = labelPaint.measureText(label)
-            val labelTop = if (top - 44f < 0f) top else top - 44f
-            canvas.drawRect(
-                left, labelTop, left + textWidth + 16f, labelTop + 42f,
+            val labelTop = if (top - 46f < 0f) top + 6f else top - 46f
+            canvas.drawRoundRect(
+                left, labelTop, left + textWidth + 18f, labelTop + 40f, 10f, 10f,
                 if (isPoi) poiLabelBgPaint else labelBgPaint
             )
-            canvas.drawText(label, left + 8f, labelTop + 32f, labelPaint)
+            canvas.drawText(label, left + 9f, labelTop + 29f, labelPaint)
         }
     }
 
