@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+# The detection model is downloaded at build time by a Gradle task in
+# app/build.gradle.kts — it is never committed.
+*.tflite
+/app/src/main/assets/efficientdet_lite0.tflite
