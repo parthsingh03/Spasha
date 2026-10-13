@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- ============ LIVE ============ -->
+        <LinearLayout
+            android:id="@+id/liveContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/hudText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/surface"
+                android:fontFamily="monospace"
+                android:padding="8dp"
+                android:textColor="@color/on_background"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="SPASHA // spaśa · CAM 01 · 19:41:47 · FPS 0 · PERSON 0 · VEHICLE 0 · TRACKS 0" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <androidx.camera.view.PreviewView
+                    android:id="@+id/previewView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <com.parth.spasha.OverlayView
+                    android:id="@+id/overlayView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="6dp">
+
+                <Button
+                    android:id="@+id/zoneButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_dark"
+                    android:fontFamily="monospace"
+                    android:text="ZONE"
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/zoneDoneButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_dark"
+                    android:enabled="false"
+                    android:fontFamily="monospace"
+                    android:text="DONE"
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/clearZoneButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_dark"
+                    android:fontFamily="monospace"
+                    android:text="CLEAR"
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/calButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_dark"
+                    android:fontFamily="monospace"
+                    android:text="CAL"
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="6dp"
+                android:background="@drawable/bg_panel"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <TextView
+                    android:id="@+id/infoText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="TAP A TRACK TO INSPECT IT."
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/poiButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_button_red"
+                    android:enabled="false"
+                    android:fontFamily="monospace"
+                    android:text="PIN AS POI"
+                    android:textColor="@color/on_background"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/calPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="6dp"
+                android:background="@drawable/bg_panel"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="SPEED CALIBRATION — LINE A AT 35% HEIGHT, LINE B AT 65% HEIGHT. SET THE REAL DISTANCE BETWEEN THE TWO LINES ON THE GROUND."
+                    android:textColor="@color/muted"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/calDistanceInput"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input"
+                        android:fontFamily="monospace"
+                        android:hint="DIST (m)"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/on_background"
+                        android:textColorHint="@color/muted"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/calLimitInput"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input"
+                        android:fontFamily="monospace"
+                        android:hint="LIMIT (km/h)"
+                        android:importantForAutofill="no"
+                        android:inputType="numberDecimal"
+                        android:text="40"
+                        android:textColor="@color/on_background"
+                        android:textColorHint="@color/muted"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/calApplyButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:background="@drawable/bg_button_red"
+                        android:fontFamily="monospace"
+                        android:text="SET"
+                        android:textColor="@color/on_background"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/calCloseButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:background="@drawable/bg_button_dark"
+                        android:fontFamily="monospace"
+                        android:text="X"
+                        android:textColor="@color/on_background"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ============ DOSSIERS ============ -->
+        <LinearLayout
+            android:id="@+id/dossiersContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="PUBLIC DOSSIERS — SOURCE: FBI WANTED (PUBLIC)"
+                android:textColor="@color/on_background"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="monospace"
+                android:text="Listings are allegations, not convictions."
+                android:textColor="@color/accent"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="monospace"
+                android:text="Not linked to live tracks — no face identification."
+                android:textColor="@color/muted"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/dossierRetryButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_button_dark"
+                android:fontFamily="monospace"
+                android:text="RETRY"
+                android:textColor="@color/on_background"
+                android:textSize="12sp" />
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:id="@+id/dossierList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+        </LinearLayout>
+
+        <!-- ============ LOG ============ -->
+        <LinearLayout
+            android:id="@+id/logContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/logStatsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="SESSION"
+                android:textColor="@color/on_background"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ScrollView
+                android:id="@+id/logScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/logText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/muted"
+                    android:textSize="12sp" />
+            </ScrollView>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- ============ BOTTOM TABS ============ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:orientation="horizontal"
+        android:padding="6dp">
+
+        <Button
+            android:id="@+id/tabLiveButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_button_red"
+            android:fontFamily="monospace"
+            android:text="LIVE"
+            android:textColor="@color/on_background"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tabDossiersButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_button_dark"
+            android:fontFamily="monospace"
+            android:text="DOSSIERS"
+            android:textColor="@color/on_background"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tabLogButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_button_dark"
+            android:fontFamily="monospace"
+            android:text="LOG"
+            android:textColor="@color/on_background"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>
