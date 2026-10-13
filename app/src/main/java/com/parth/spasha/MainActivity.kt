@@ -1,7 +1,6 @@
 package com.parth.spasha
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,9 +9,7 @@ import android.graphics.Matrix
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.Typeface
 import android.graphics.YuvImage
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -22,10 +19,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Size
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -35,29 +29,15 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.parth.spasha.databinding.ActivityMainBinding
-import org.json.JSONArray
-import org.json.JSONObject
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.task.core.BaseOptions
 import org.tensorflow.lite.task.vision.detector.ObjectDetector
 import java.io.ByteArrayOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
-private data class DossierEntry(
-    val title: String,
-    val subjects: String,
-    val offices: String,
-    val description: String,
-    val warning: String,
-    val status: String,
-    val url: String
-)
 
 /**
  * SPASHA (spaśa, स्पश) — a live camera that puts a track on everything in
@@ -67,8 +47,7 @@ private data class DossierEntry(
  * be measured once the user calibrates two ground lines.
  *
  * There is deliberately no face identification and no identity lookup for
- * live tracks. The Dossiers tab is a separate, public FBI Wanted list and is
- * never linked to anything the camera sees.
+ * live tracks.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -106,9 +85,6 @@ class MainActivity : AppCompatActivity() {
     @Volatile private var currentFps = 0
     private var fpsFrames = 0
     private var fpsWindowStartMs = System.currentTimeMillis()
-
-    private var dossiersLoaded = false
-    private var dossiersLoading = false
 
     private val handler = Handler(Looper.getMainLooper())
     private val uiTicker = object : Runnable {
@@ -169,7 +145,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 binding.infoText.text =
                     "CAMERA PERMISSION DENIED — SPASHA CANNOT SEE WITHOUT THE CAMERA. GRANT IT IN APP SETTINGS AND REOPEN THE APP."
-                binding.hudText.text = "SPASHA // spaśa · NO CAMERA"
+                binding.hudText.text = "CAM 01 · NO CAMERA"
                 addLog("CAMERA PERMISSION DENIED")
             }
         }
@@ -179,27 +155,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupTabs() {
         binding.tabLiveButton.setOnClickListener { showTab(0) }
-        binding.tabDossiersButton.setOnClickListener { showTab(1) }
-        binding.tabLogButton.setOnClickListener { showTab(2) }
+        binding.tabLogButton.setOnClickListener { showTab(1) }
     }
 
     private fun showTab(tab: Int) {
         binding.liveContainer.visibility = if (tab == 0) View.VISIBLE else View.GONE
-        binding.dossiersContainer.visibility = if (tab == 1) View.VISIBLE else View.GONE
-        binding.logContainer.visibility = if (tab == 2) View.VISIBLE else View.GONE
+        binding.logContainer.visibility = if (tab == 1) View.VISIBLE else View.GONE
         binding.tabLiveButton.setBackgroundResource(
-            if (tab == 0) R.drawable.bg_button_red else R.drawable.bg_button_dark
-        )
-        binding.tabDossiersButton.setBackgroundResource(
-            if (tab == 1) R.drawable.bg_button_red else R.drawable.bg_button_dark
+            if (tab == 0) R.drawable.bg_nav_selected else R.drawable.bg_nav_idle
         )
         binding.tabLogButton.setBackgroundResource(
-            if (tab == 2) R.drawable.bg_button_red else R.drawable.bg_button_dark
+            if (tab == 1) R.drawable.bg_nav_selected else R.drawable.bg_nav_idle
         )
-        if (tab == 1 && !dossiersLoaded && !dossiersLoading) {
-            loadDossiers()
-        }
-        if (tab == 2) {
+        if (tab == 1) {
             renderLog()
         }
     }
@@ -269,11 +237,6 @@ class MainActivity : AppCompatActivity() {
             )
             binding.calPanel.visibility = View.GONE
             pushOverlayState()
-        }
-
-        binding.dossierRetryButton.setOnClickListener {
-            dossiersLoaded = false
-            loadDossiers()
         }
     }
 
@@ -594,7 +557,7 @@ class MainActivity : AppCompatActivity() {
         val time = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
         binding.hudText.text = String.format(
             Locale.US,
-            "SPASHA // spaśa · CAM 01 · %s · FPS %d · PERSON %d · VEHICLE %d · TRACKS %d",
+            "CAM 01 · %s · FPS %d · PERSON %d · VEHICLE %d · TRACKS %d",
             time, currentFps, persons, vehicles, total
         )
     }
@@ -618,170 +581,6 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             // Vibration is a nicety, never a crash.
         }
-    }
-
-    // --------------------------------------------------------------- dossiers
-
-    private fun loadDossiers() {
-        dossiersLoading = true
-        val list = binding.dossierList
-        list.removeAllViews()
-        list.addView(makeDossierText("LOADING FROM api.fbi.gov …", muted = true, bold = false))
-
-        Thread {
-            try {
-                val url = URL("https://api.fbi.gov/wanted/v1/list?pageSize=24&page=1")
-                val conn = url.openConnection() as HttpURLConnection
-                conn.connectTimeout = 15000
-                conn.readTimeout = 15000
-                conn.setRequestProperty("User-Agent", "SPASHA Android")
-                val code = conn.responseCode
-                if (code != 200) {
-                    throw RuntimeException("HTTP $code")
-                }
-                val body = conn.inputStream.bufferedReader().readText()
-                conn.disconnect()
-                val json = JSONObject(body)
-                val items = json.optJSONArray("items") ?: JSONArray()
-                val entries = mutableListOf<DossierEntry>()
-                for (i in 0 until items.length()) {
-                    val item = items.optJSONObject(i) ?: continue
-                    entries.add(
-                        DossierEntry(
-                            title = item.optString("title", "UNKNOWN"),
-                            subjects = joinJsonArray(item.optJSONArray("subjects")),
-                            offices = joinJsonArray(item.optJSONArray("field_offices")),
-                            description = item.optString("description", ""),
-                            warning = item.optString("warning_message", ""),
-                            status = item.optString("status", ""),
-                            url = item.optString("url", "")
-                        )
-                    )
-                }
-                runOnUiThread {
-                    dossiersLoading = false
-                    dossiersLoaded = true
-                    renderDossiers(entries)
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    dossiersLoading = false
-                    val l = binding.dossierList
-                    l.removeAllViews()
-                    l.addView(
-                        makeDossierText(
-                            "COULD NOT LOAD THE FBI LIST (" + (e.message ?: "network error") +
-                                "). CHECK THE INTERNET CONNECTION AND PRESS RETRY.",
-                            muted = false, bold = false
-                        )
-                    )
-                }
-            }
-        }.start()
-    }
-
-    private fun joinJsonArray(array: JSONArray?): String {
-        if (array == null) return ""
-        val parts = mutableListOf<String>()
-        for (i in 0 until array.length()) {
-            val s = array.optString(i, "")
-            if (s.isNotEmpty()) parts.add(s)
-        }
-        return parts.joinToString(", ")
-    }
-
-    private fun makeDossierText(text: String, muted: Boolean, bold: Boolean): TextView {
-        val tv = TextView(this)
-        tv.text = text
-        tv.setTextColor(
-            ContextCompat.getColor(this, if (muted) R.color.muted else R.color.on_background)
-        )
-        tv.textSize = 13f
-        tv.typeface = if (bold) {
-            Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-        } else {
-            Typeface.MONOSPACE
-        }
-        tv.setPadding(4, 8, 4, 8)
-        return tv
-    }
-
-    private fun renderDossiers(entries: List<DossierEntry>) {
-        val list = binding.dossierList
-        list.removeAllViews()
-        if (entries.isEmpty()) {
-            list.addView(makeDossierText("THE FBI LIST CAME BACK EMPTY.", muted = true, bold = false))
-            return
-        }
-        for (entry in entries) {
-            val row = LinearLayout(this)
-            row.orientation = LinearLayout.VERTICAL
-            row.setBackgroundResource(R.drawable.bg_panel)
-            row.setPadding(20, 16, 20, 16)
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.setMargins(0, 0, 0, 16)
-            row.layoutParams = params
-
-            val titleTv = makeDossierText(entry.title, muted = false, bold = true)
-            titleTv.textSize = 14f
-            row.addView(titleTv)
-
-            val subParts = mutableListOf<String>()
-            if (entry.subjects.isNotEmpty()) subParts.add(entry.subjects.uppercase(Locale.US))
-            if (entry.offices.isNotEmpty()) subParts.add("OFFICE: " + entry.offices.uppercase(Locale.US))
-            if (subParts.isNotEmpty()) {
-                val subTv = makeDossierText(subParts.joinToString(" · "), muted = true, bold = false)
-                subTv.textSize = 11f
-                row.addView(subTv)
-            }
-            row.setOnClickListener { showDossierDetail(entry) }
-            list.addView(row)
-        }
-    }
-
-    private fun showDossierDetail(entry: DossierEntry) {
-        val sb = StringBuilder()
-        if (entry.subjects.isNotEmpty()) sb.append("SUBJECTS: ").append(entry.subjects).append("\n")
-        if (entry.offices.isNotEmpty()) sb.append("FIELD OFFICES: ").append(entry.offices).append("\n")
-        if (entry.status.isNotEmpty() && entry.status != "na") {
-            sb.append("STATUS: ").append(entry.status.uppercase(Locale.US)).append("\n")
-        }
-        if (entry.warning.isNotEmpty()) {
-            sb.append("\nWARNING: ").append(stripHtml(entry.warning)).append("\n")
-        }
-        if (entry.description.isNotEmpty()) {
-            sb.append("\n").append(stripHtml(entry.description))
-        }
-        if (sb.isEmpty()) sb.append("No further details in the public listing.")
-
-        val builder = AlertDialog.Builder(this)
-            .setTitle(entry.title)
-            .setMessage(sb.toString())
-            .setNegativeButton("CLOSE", null)
-        if (entry.url.isNotEmpty()) {
-            builder.setPositiveButton("OPEN FBI PAGE") { _, _ ->
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(entry.url)))
-                } catch (e: Exception) {
-                    Toast.makeText(this, "NO BROWSER AVAILABLE", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-        builder.show()
-    }
-
-    private fun stripHtml(html: String): String {
-        var text = html.replace(Regex("<[^>]*>"), " ")
-        text = text.replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            .replace("&quot;", "\"")
-            .replace("&#39;", "'")
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-        return text.replace(Regex("\\s+"), " ").trim()
     }
 
     // -------------------------------------------------------------------- log
