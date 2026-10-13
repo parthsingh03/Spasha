@@ -18,7 +18,7 @@ tasks.register("downloadDetectionModel") {
     doLast {
         detectionModelFile.parentFile.mkdirs()
         logger.lifecycle("Downloading detection model from $detectionModelUrl")
-        java.net.URL(detectionModelUrl).openStream().use { input ->
+        uri(detectionModelUrl).toURL().openStream().use { input ->
             detectionModelFile.outputStream().use { output -> input.copyTo(output) }
         }
         logger.lifecycle("Detection model saved to $detectionModelFile (${detectionModelFile.length()} bytes)")
