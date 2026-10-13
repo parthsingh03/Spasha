@@ -39,13 +39,6 @@ phone.
   When a vehicle crosses both lines, the app shows its speed in km/h and
   flags it if it is over your limit.
 
-**DOSSIERS tab**
-- A list of people currently on the FBI Wanted public list, fetched from
-  the FBI's public API. Tap a name for the details from the listing, with a
-  button to open the full FBI page.
-- This tab is separate from the camera. Nothing in it is ever matched
-  against a person in the camera view.
-
 **LOG tab**
 - Every event of the session with timestamps: new tracks, POI pins, zone
   entries and exits, 60-second loiters, speed readings, zone and
@@ -59,14 +52,13 @@ phone.
 - A simple tracker matches each detection to the track from the previous
   frames (same type, overlapping box or small centre movement) so IDs stay
   stable while a subject is in view.
-- The FBI list is fetched over HTTPS from `api.fbi.gov` when you open the
-  Dossiers tab. That is the only network call the app makes.
+- The interface is a minimalist full-screen camera view with floating
+  glass-style panels and controls — the Ghost Glass design.
 
 ## Permissions
 
 - **CAMERA** — the live view. Detection runs on-device; no video leaves
   the phone.
-- **INTERNET** — only for the Dossiers tab (FBI Wanted list).
 - **VIBRATE** — a short buzz when a pinned POI enters your zone.
 
 ## Building the APK
@@ -106,8 +98,6 @@ Local build, if you have the Android SDK installed: `./gradlew assembleDebug`.
 - **The flag score is simple rules, not a threat judgement.** It counts
   dwell time, zone entries and speed — nothing more. Read the printed rules
   before you read the number.
-- **The Dossiers tab is not linked to live tracks.** It shows the public
-  FBI Wanted list. Listings are allegations, not convictions.
 - Detection is a small on-device model: expect misses in bad light, at
   long distance, and with heavy overlap. Continuous detection also uses
   battery and can warm the phone.
